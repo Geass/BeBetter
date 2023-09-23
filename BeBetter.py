@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QCalendarWidget, QListWidget, QListWidgetItem, QAbstractItemView, QListView
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QCalendarWidget, QListWidget, QListWidgetItem, QAbstractItemView, QListView, QLabel
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPalette, QColor, QFont
 import pickle
@@ -9,7 +9,8 @@ class MyApp(QWidget):
     def __init__(self):
         super().__init__()
         self.completed_tasks = self.load_data()
-        self.selected_date = None  # Add this line
+        self.selected_date = None
+        self.task_points = {'8 godzin snu': 4, 'siłownia / ćwiczenia': 2, 'brak słodyczy': 1, 'programowanie oraz projekty': 5, '20 minut czytania oraz nauki': 4, '2 litry wody': 1, 'spędzenie czasu w samotności': 1}
         self.initUI()
 
     def initUI(self):
@@ -31,6 +32,11 @@ class MyApp(QWidget):
         self.listWidget.itemChanged.connect(self.itemChanged)
         vbox.addWidget(self.listWidget)
 
+        self.pointsLabel = QLabel(self)
+
+        self.pointsLabel.setFont(QFont('Arial', 18))
+        vbox.addWidget(self.pointsLabel)
+
 
     def showTasks(self):
         # Clear the list widget
@@ -42,6 +48,8 @@ class MyApp(QWidget):
         # List of tasks
         tasks = ['8 godzin snu', 'siłownia / ćwiczenia', 'brak słodyczy', 'programowanie oraz projekty', '20 minut czytania oraz nauki', '2 litry wody', 'spędzenie czasu w samotności' ]
 
+        self.pointsLabel.setText(f"Points: {self.completed_tasks.get('points', 0)}")
+
         for task in tasks:
             item = QListWidgetItem(task)
             item.setFont(QFont('Arial', 18))
@@ -52,9 +60,14 @@ class MyApp(QWidget):
 
     def itemChanged(self, item):
         if item.checkState() == Qt.Checked:
-            self.completed_tasks.setdefault(self.selected_date, set()).add(item.text())  
+            self.completed_tasks.setdefault(self.selected_date, set()).add(item.text())
+            self.completed_tasks.setdefault('points', 0)
+            self.completed_tasks['points'] += self.task_points.get(item.text(), 0)
         else:
-            self.completed_tasks.setdefault(self.selected_date, set()).discard(item.text()) 
+            self.completed_tasks.setdefault(self.selected_date, set()).discard(item.text())
+            self.completed_tasks.setdefault('points', 0)
+            self.completed_tasks['points'] -= self.task_points.get(item.text(), 0)
+            self.pointsLabel.setText(f"Points: {self.completed_tasks.get('points', 0)}")
         self.save_data()
 
     def load_data(self):
